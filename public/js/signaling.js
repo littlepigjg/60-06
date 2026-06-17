@@ -4,6 +4,7 @@ class SignalingClient {
     this.clientId = null;
     this.roomCode = null;
     this.role = null;
+    this.cursorColor = null;
     this.handlers = new Map();
   }
 
@@ -24,6 +25,7 @@ class SignalingClient {
         try { msg = JSON.parse(e.data); } catch { return; }
         if (msg.type === 'connected') {
           this.clientId = msg.clientId;
+          this.cursorColor = msg.cursorColor;
           resolve();
         }
         this.emit(msg.type, msg);
@@ -104,6 +106,18 @@ class SignalingClient {
 
   sendIceCandidate(to, candidate) {
     this.send({ type: 'ice-candidate', to, candidate });
+  }
+
+  sendCursorMove(x, y) {
+    this.send({ type: 'cursor-move', x, y });
+  }
+
+  sendCursorClick(x, y) {
+    this.send({ type: 'cursor-click', x, y });
+  }
+
+  sendCursorVisibility(visible) {
+    this.send({ type: 'cursor-visibility', visible });
   }
 
   isOpen() {

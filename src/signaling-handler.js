@@ -15,12 +15,27 @@ class SignalingHandler {
     });
   }
 
+  getCursorColor() {
+    const colors = [
+      '#ef4444', '#f59e0b', '#10b981', '#3b82f6',
+      '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'
+    ];
+    let hash = 0;
+    const id = randomUUID();
+    for (let i = 0; i < id.length; i++) {
+      hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
+    }
+    return colors[hash % colors.length];
+  }
+
   initializeClient(ws) {
     ws.id = randomUUID();
     ws.role = 'viewer';
     ws.audioEnabled = false;
     ws.name = '用户' + Math.floor(Math.random() * 1000);
-    ws.send(JSON.stringify({ type: 'connected', clientId: ws.id }));
+    ws.cursorColor = this.getCursorColor();
+    ws.cursorVisible = false;
+    ws.send(JSON.stringify({ type: 'connected', clientId: ws.id, cursorColor: ws.cursorColor }));
   }
 
   bindMessageHandler(ws) {
@@ -73,6 +88,15 @@ class SignalingHandler {
       case 'ice-candidate':
         this.handleIceCandidate(ws, msg);
         break;
+      case 'cursor-move':
+        this.handleCursorMove(ws, msg);
+        break;
+      case 'cursor-click':
+        this.handleCursorClick(ws, msg);
+        break;
+      case 'cursor-visibility':
+        this.handleCursorVisibility(ws, msg);
+        break;
     }
   }
 
@@ -116,7 +140,8 @@ class SignalingHandler {
         id: c.id,
         role: c.role,
         name: c.name,
-        audioEnabled: c.audioEnabled || false
+        audioEnabled: c.audioEnabled || false,
+        cursorColor: c.cursorColor
       }))
     };
   }
@@ -177,6 +202,12 @@ class SignalingHandler {
     if (!ws.roomCode) return;
     const code = ws.roomCode;
     const room = this.roomManager.getRoom(code);
+
+    this.broadcastToRoom(code, {
+      type: 'cursor-visibility',
+      peerId: ws.id,
+      visible: false
+    });
 
     if (room && ws.role === 'host') {
       this.broadcastToRoom(code, { type: 'room-destroyed' });
@@ -269,6 +300,40 @@ class SignalingHandler {
         candidate: msg.candidate
       }));
     }
+  }
+
+  handleCursorMove(ws, msg) {
+    if (!ws.roomCode) return;
+    this.broadcastToRoom(ws.roomCode, {
+      type: 'cursor-move',
+      peerId: ws.id,
+      name: ws.name,
+      color: ws.cursorColor,
+      x: msg.x,
+      y: msg.y
+    }, ws.id);
+  }
+
+  handleCursorClick(ws, msg) {
+    if (!ws.roomCode) return;
+    this.broadcastToRoom(ws.roomCode, {
+      type: 'cursor-click',
+      peerId: ws.id,
+      name: ws.name,
+      color: ws.cursorColor,
+      x: msg.x,
+      y: msg.y
+    }, ws.id);
+  }
+
+  handleCursorVisibility(ws, msg) {
+    if (!ws.roomCode) return;
+    ws.cursorVisible = msg.visible || false;
+    this.broadcastToRoom(ws.roomCode, {
+      type: 'cursor-visibility',
+      peerId: ws.id,
+      visible: ws.cursorVisible
+    }, ws.id);
   }
 }
 

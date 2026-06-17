@@ -31,6 +31,7 @@
   const signaling = new SignalingClient();
   let webrtc = null;
   let annotation = null;
+  let cursorManager = null;
   let roomInfo = null;
 
   const userName = savedName || (mode === 'host' ? '主持人' : '观众') + Math.floor(Math.random() * 1000);
@@ -49,6 +50,14 @@
 
   annotation = new AnnotationManager(annotCanvas, signaling);
   setupAnnotationTools(annotation);
+
+  cursorManager = new CursorManager(
+    videoArea,
+    signaling,
+    signaling.clientId,
+    userName,
+    signaling.cursorColor
+  );
 
   webrtc = new WebRTCManager(signaling, signaling.clientId);
   webrtc.onStreamAdded = (peerId, stream) => {
@@ -125,6 +134,7 @@
 
   signaling.on('peer-left', (msg) => {
     webrtc.removePeer(msg.peerId);
+    if (cursorManager) cursorManager.removeCursor(msg.peerId);
   });
 
   signaling.on('room-destroyed', () => {
@@ -169,6 +179,18 @@
     annotation.annotations = [];
     annotation.render();
     UI.toast('标注已被清空');
+  });
+
+  signaling.on('cursor-move', (msg) => {
+    if (cursorManager) cursorManager.handleCursorMove(msg);
+  });
+
+  signaling.on('cursor-click', (msg) => {
+    if (cursorManager) cursorManager.handleCursorClick(msg);
+  });
+
+  signaling.on('cursor-visibility', (msg) => {
+    if (cursorManager) cursorManager.handleCursorVisibility(msg);
   });
 
   signaling.on('disconnected', () => {
@@ -220,6 +242,7 @@
   function cleanup() {
     try { signaling.leaveRoom(); } catch (e) { /* ignore */ }
     try { webrtc.destroy(); } catch (e) { /* ignore */ }
+    try { cursorManager && cursorManager.destroy(); } catch (e) { /* ignore */ }
   }
   window.addEventListener('beforeunload', cleanup);
 

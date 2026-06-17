@@ -591,3 +591,87 @@ body {
     max-height: 45vh;
   }
 }
+
+/* ===== Cursor Layer ===== */
+.cursor-layer,
+.ripple-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.cursor-layer {
+  z-index: 20;
+}
+
+.ripple-layer {
+  z-index: 19;
+}
+
+.remote-cursor {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transition: opacity 0.15s ease;
+  will-change: transform;
+}
+
+.cursor-pointer {
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 16px solid #ef4444;
+  transform: rotate(-45deg);
+  transform-origin: top left;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4));
+}
+
+.cursor-name {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  background: #ef4444;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* ===== Ripple Animation ===== */
+.cursor-ripple {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  margin-left: -5px;
+  margin-top: -5px;
+  border: 2px solid #ef4444;
+  border-radius: 50%;
+  opacity: 1;
+  animation: rippleExpand 0.6s ease-out forwards;
+  pointer-events: none;
+}
+
+@keyframes rippleExpand {
+  0% {
+    width: 10px;
+    height: 10px;
+    margin-left: -5px;
+    margin-top: -5px;
+    opacity: 1;
+  }
+  100% {
+    width: 60px;
+    height: 60px;
+    margin-left: -30px;
+    margin-top: -30px;
+    opacity: 0;
+  }
+}
